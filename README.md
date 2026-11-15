@@ -1,23 +1,35 @@
-# Jalpan Móvil V0.4 · Laboratorio de cámara
+# JALPAN MÓVIL V0.5 · Laboratorio público
 
-Esta versión es únicamente un laboratorio para cámara en vivo y detección preliminar de calidad visual con datos ficticios.
+**Estado:** prototipo de cámara, evaluación experimental de calidad e interfaz simulada de usuarios y auditoría. **No es un sistema de registro en producción.**
 
-## Prohibido usar datos reales
-No fotografiar INE, CURP, domicilios ni teléfonos. No hay OCR, detección validada de documento original, autenticación ni sincronización con Drive.
+## Acceso
+GitHub Pages: https://sahe742.github.io/jalpan-lab-demo/
 
-## Pruebas en el teléfono
-1. Abrir la URL publicada con HTTPS en Chrome Android o Safari iPhone.
-2. En **Cámara**, tocar **Activar cámara** y permitir el acceso.
-3. Apuntar a una tarjeta ficticia impresa y tocar **Evaluar imagen**.
-4. En **Diagnóstico**, tocar **Ejecutar prueba**.
-5. Instalar desde el menú del navegador.
-6. Tras cargar con internet, activar modo avión y comprobar apertura. No se garantiza sincronización en segundo plano en iPhone.
+## Cambios V0.5
+- Corrección de la prueba sintética de nitidez reportada como no concluyente en iPhone.
+- Nueva pestaña de **Usuarios (demo)** con máximo de 50 cuentas como requisito documentado, no implementado.
+- Bitácora completamente ficticia, sin almacenamiento.
+- Versión de caché offline actualizada y comprobación de actualización al recuperar conexión.
+- Documentos de arquitectura segura, flujo de datos, plan de pruebas y pendientes de producción.
 
-## Alcance
-La cámara no permite seleccionar archivos de la galería, pero ello no prueba que el documento sea genuino. La prueba de nitidez usa umbrales experimentales; no comprueba legibilidad OCR. GitHub Pages es público: nunca guardar allí información personal, claves ni datos de ciudadanos.
+## Lo confirmado y lo pendiente
+Confirmado por capturas del usuario: HTTPS, acceso a cámara iPhone, procesamiento preliminar y service worker. La nueva prueba de nitidez V0.5 sigue pendiente de validación en teléfono.
 
-## Archivos
-index.html, app.js, sw.js, manifest.webmanifest, icon.svg, icon-192.png, icon-512.png.
+No implementados: creación real de cuentas, contraseñas, MFA, OCR, detección auténtica de INE, base de datos, cifrado offline, sincronización con Drive, deduplicación global y consentimientos.
 
-## Infraestructura
-Sin tienda de aplicaciones, sin backend ni base de datos. El repositorio público contiene solamente código de laboratorio.
+GitHub Pages es **público**. No enviar a este dominio fotografías de INE ni información identificable; tampoco subir tokens, claves API o archivos de Drive.
+
+## Documentación
+- [Arquitectura segura](docs/ARQUITECTURA_SEGURA.md)
+- [Esquema de datos y auditoría](docs/ESQUEMA_DATOS.md)
+- [Pruebas y resultados](docs/PRUEBAS_Y_RESULTADOS.md)
+
+## Prueba en el teléfono
+1. Abrir el sitio HTTPS, actualizar y confirmar V0.5.
+2. Diagnóstico → Ejecutar prueba. Compartir solo el resultado numérico de nitidez, sin capturas de documentos.
+3. Usuarios (demo) → verificar estructura ficticia.
+4. Cámara → usar tarjeta inventada.
+5. Instalación → Comprobar recursos offline. Abrir la app en modo avión si el navegador lo permite.
+
+## Política de despliegue
+No se habilitará ninguna captura de información personal real hasta implementar y validar la infraestructura privada, la autorización verificable de titulares, autenticación y restricciones de acceso, y auditoría independiente.
