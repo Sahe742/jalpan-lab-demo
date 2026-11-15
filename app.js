@@ -2,7 +2,7 @@
 (()=>{
  const $=id=>document.getElementById(id); let stream=null, installEvent=null;
  const setStatus=(msg,cls='')=>{ $('status').textContent=msg; $('status').className='small '+cls; };
- function tabs(name){ document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab===name)); ['cam','diag','inst'].forEach(x=>$(x).classList.toggle('hide',x!==name)); if(name==='diag')diagnostics(); }
+ function tabs(name){ document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab===name)); ['cam','diag','inst','users'].forEach(x=>$(x).classList.toggle('hide',x!==name)); if(name==='diag')diagnostics(); if(name==='users')userLab(); }
  document.querySelectorAll('.tab').forEach(x=>x.addEventListener('click',()=>tabs(x.dataset.tab)));
  async function start(){if(!navigator.mediaDevices?.getUserMedia){setStatus('Cámara no disponible. Abre desde HTTPS o localhost en un teléfono con cámara.','bad');return;}try{stream=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:960}}});$('video').srcObject=stream; await $('video').play();$('snap').disabled=false;$('stop').disabled=false;$('start').disabled=true;setStatus('Cámara activada. Apunta a una tarjeta de PRUEBA, nunca a una INE real.','good');}catch(e){setStatus('No se pudo abrir la cámara: '+e.name+' — '+e.message,'bad');}}
  function stop(){if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}$('video').srcObject=null;$('snap').disabled=true;$('stop').disabled=true;$('start').disabled=false;setStatus('Cámara apagada.');}
@@ -21,7 +21,36 @@
  $('metrics').innerHTML=[['Resolución',q.width+' × '+q.height],['Brillo medio',q.mean.toFixed(1)],['Contraste',q.contrast.toFixed(1)],['Nitidez aproximada',q.sharp.toFixed(1)]].map(([a,b])=>'<div class="metric"><b>'+b+'</b><span>'+a+'</span></div>').join('');$('assessment').scrollIntoView({behavior:'smooth',block:'nearest'});
  }
  function diagnostics(){const vals={url:location.href,secureContext:isSecureContext,https:location.protocol==='https:',cameraApi:!!navigator.mediaDevices?.getUserMedia,serviceWorker:'serviceWorker' in navigator,online:navigator.onLine,platform:navigator.userAgent.slice(0,180),localTime:new Date().toISOString(),mode:matchMedia('(display-mode: standalone)').matches?'instalada':'navegador'};$('diagnostics').textContent=JSON.stringify(vals,null,2);$('checks').innerHTML=[['HTTPS',vals.https],['Cámara',vals.cameraApi],['Service worker',vals.serviceWorker],['Red',vals.online]].map(([k,v])=>'<span class="pill">'+k+': '+(v?'Sí':'No')+'</span>').join('');}
- function selftest(){const w=800,h=600,c=document.createElement('canvas');c.width=w;c.height=h;const ctx=c.getContext('2d',{willReadFrequently:true});ctx.fillStyle='#f7f7f7';ctx.fillRect(0,0,w,h);for(let i=0;i<30;i++){ctx.fillStyle=i%2?'#101010':'#e9e9e9';ctx.fillRect(100+i*18,180,14,250);}const good=quality(ctx.getImageData(0,0,w,h).data,w,h);ctx.filter='blur(12px)';ctx.drawImage(c,0,0);ctx.filter='none';const blurred=quality(ctx.getImageData(0,0,w,h).data,w,h);const passed=good.sharp>blurred.sharp;$('testOutput').textContent='Prueba de imagen sintética\nNitidez definida: '+good.sharp.toFixed(2)+'\nNitidez suavizada: '+blurred.sharp.toFixed(2)+'\nResultado: '+(passed?'PASS: distingue diferencia de nitidez':'NO CONCLUYENTE: revisar implementación')+'\nEsta prueba NO valida OCR ni detección de falsificaciones.';}
+ function selftest(){
+  const w=800,h=600,source=document.createElement('canvas');source.width=w;source.height=h;
+  const ctx=source.getContext('2d',{willReadFrequently:true});
+  ctx.fillStyle='#f7f7f7';ctx.fillRect(0,0,w,h);
+  // Test stripes occupy the same central region measured by quality().
+  for(let i=0;i<30;i++){ctx.fillStyle=i%2?'#101010':'#e9e9e9';ctx.fillRect(100+i*18,180,14,250);}
+  const defined=quality(ctx.getImageData(0,0,w,h).data,w,h);
+  // Critical fix: blur into a DIFFERENT canvas. Drawing a canvas on itself
+  // is undefined across engines and previously gave identical metrics on iPhone.
+  const blurredCanvas=document.createElement('canvas');blurredCanvas.width=w;blurredCanvas.height=h;
+  const blurredCtx=blurredCanvas.getContext('2d',{willReadFrequently:true});
+  blurredCtx.fillStyle='#f7f7f7';blurredCtx.fillRect(0,0,w,h);
+  blurredCtx.filter='blur(12px)';blurredCtx.drawImage(source,0,0);blurredCtx.filter='none';
+  const softened=quality(blurredCtx.getImageData(0,0,w,h).data,w,h);
+  const passed=defined.sharp>softened.sharp*1.15;
+  $('testOutput').textContent='Prueba de imagen sintética\\nNitidez definida: '+defined.sharp.toFixed(2)+
+   '\\nNitidez suavizada: '+softened.sharp.toFixed(2)+'\\nResultado: '+
+   (passed?'PASS: distingue diferencia de nitidez':'NO CONCLUYENTE: el navegador no separó bien las imágenes')+
+   '\\nEsta prueba NO valida OCR, autenticidad documental ni seguridad de datos.';
+ }
+ function userLab(){
+  const rows=[
+   {id:'USR-DEMO-01',nombre:'Coordinación de prueba',rol:'Administrador',estado:'Aprobado'},
+   {id:'USR-DEMO-02',nombre:'Capturista ficticio',rol:'Capturista',estado:'Pendiente'}
+  ];
+  $('userCount').textContent=rows.length+' / 50 cuentas simuladas';
+  $('userRows').textContent=rows.map(r=>r.id+' · '+r.nombre+' · '+r.rol+' · '+r.estado).join('\\n');
+  $('auditRows').textContent='2026-11-15 · USR-DEMO-01 · USUARIO_SIMULADO · autorización ficticia\\n2026-11-15 · USR-DEMO-02 · ACCESO_PENDIENTE · sin acceso real';
+ }
+
  window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installEvent=e;$('install').classList.remove('hide');});
  $('install').addEventListener('click',async()=>{if(!installEvent)return;installEvent.prompt();await installEvent.userChoice;installEvent=null;$('install').classList.add('hide');});
  $('offline').addEventListener('click',async()=>{if(!('serviceWorker' in navigator)){$('offlineStatus').textContent='Service workers no disponibles.';return;}try{const reg=await navigator.serviceWorker.ready;const cache=await caches.open('jalpan-v04');const keys=await cache.keys();$('offlineStatus').textContent='Service worker: '+(reg.active?'activo':'pendiente')+'. Recursos locales en caché: '+keys.length+'. Prueba final: activa modo avión y vuelve a abrir la aplicación.';}catch(e){$('offlineStatus').textContent='Error: '+e.message;}});
