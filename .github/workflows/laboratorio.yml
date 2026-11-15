@@ -1,0 +1,31 @@
+name: Verificar laboratorio
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  static-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Revisar JavaScript
+        run: node --check app.js && node --check sw.js
+      - name: Revisar archivos y HTML
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          s=Path("index.html").read_text(encoding="utf-8")
+          for filename in ["index.html","app.js","sw.js","manifest.webmanifest","icon-192.png","icon-512.png"]:
+              assert Path(filename).exists(), filename
+          assert len(re.findall(r"<section\b",s)) == len(re.findall(r"</section>",s))
+          for item in ['data-tab="users"','id="users"','id="userRows"','id="auditRows"','id="testOutput"']:
+              assert item in s, item
+          assert '<input' not in s.lower(), "Este laboratorio no debe solicitar datos personales"
+          print("Estructura HTML y recursos correctos")
+          PY
